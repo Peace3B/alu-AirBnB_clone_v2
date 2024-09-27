@@ -8,19 +8,6 @@ import json
 import os
 
 
-class BaseModel:
-    def __init__(self, *args, **kwargs):
-        if kwargs:
-            # Set 'created_at' from kwargs or current time
-            self.created_at = datetime.datetime.strptime(kwargs['created_at'], "%Y-%m-%dT%H:%M:%S.%f") if 'created_at' in kwargs else datetime.datetime.now()
-
-            # Set 'updated_at' to the current time regardless of kwargs
-            self.updated_at = datetime.datetime.now()
-        else:
-            # Normal initialization
-            self.created_at = datetime.datetime.now()
-            self.updated_at = datetime.datetime.now()
-
 class test_basemodel(unittest.TestCase):
     """ """
 
@@ -92,6 +79,17 @@ class test_basemodel(unittest.TestCase):
         n = {'Name': 'test'}
         with self.assertRaises(KeyError):
             new = self.value(**n)
+
+            if kwargs:
+            # Set 'created_at' from kwargs or current time
+            self.created_at = datetime.datetime.strptime(kwargs['created_at'], "%Y-%m-%dT%H:%M:%S.%f") if 'created_at' in kwargs else datetime.datetime.now()
+
+            # Set 'updated_at' to the current time regardless of kwargs
+            self.updated_at = datetime.datetime.now()
+        else:
+            # Normal initialization
+            self.created_at = datetime.datetime.now()
+            self.updated_at = datetime.datetime.now()
 
     def test_id(self):
         """ """
