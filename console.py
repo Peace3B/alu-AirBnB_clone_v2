@@ -1,15 +1,14 @@
 #!/usr/bin/python3
 """ Console Module """
-import models
 import cmd
 import sys
 from models.base_model import BaseModel
 from models.__init__ import storage
-from models.amenity import Amenity
 from models.user import User
 from models.place import Place
-from models.city import City
 from models.state import State
+from models.city import City
+from models.amenity import Amenity
 from models.review import Review
 
 
@@ -74,8 +73,8 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] == '{' and pline[-1] == '}' \
-                            and type(eval(pline)) is dict:
+                    if pline[0] == '{' and pline[-1] == '}'\
+                            and type(eval(pline)) == dict:
                         _args = pline
                     else:
                         _args = pline.replace(',', '')
@@ -116,44 +115,52 @@ class HBNBCommand(cmd.Cmd):
 
     def do_create(self, args):
         """ Create an object of any class"""
-        if len(args) < 1:
+        # Check if the argument is empty
+        if not args:
             print("** class name missing **")
             return
-        # convert the args to a list
-        args = args.split()
+        # Split the argument into a list of arguments (on each space)
+        args_list = args.split()
+        class_name = args_list[0]
 
-        # the 1st element of the list is the class name
-        name_of_class = args[0]
-
-        if name_of_class not in self.classes:
+        # We know that the first item of this argument list should be the class
+        # Check if the class exists
+        if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        new_instance = self.classes[name_of_class]()
-        for params in args[1:]:
-            if "=" not in params:
-                continue
-            key, value = params.split('=')
+
+        # Create a new instance of the class
+        new_instance = HBNBCommand.classes[class_name]()
+
+        # contains the attribute to set to the class
+        # attribute and values are still separated by the `=` sign
+        attributes = args_list[1:]
+
+        # Go over all attributes and split keys and values from the `=` sign
+        for attribute in attributes:
+            key, value = attribute.split('=')
+            # Handle the formating (string, integer, float, underscore)
             value = value.replace('_', ' ')
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1].replace('\\"', '"')
-            elif '.' in value:
-                try:
-                    value = float(value)
-                except ValueError:
-                    continue
+
+            if value[0] == value[-1] == '"':
+                value = value[1:-1]
             else:
+                # If value isn't in quotation marks
+                # it might be a numerical value
                 try:
                     value = int(value)
                 except ValueError:
-                    continue
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass  # If all fail, then it's a string
 
-            if value is not None and value != "" and hasattr(
-                    new_instance, key):
-                setattr(new_instance, key, value)
+            setattr(new_instance, key, value)
 
+        storage.save()
         print(new_instance.id)
-        new_instance.save()
-        #empty line
+        storage.save()
+
     def help_create(self):
         """ Help information for the create method """
         print("Creates a class of any type")
@@ -183,7 +190,7 @@ class HBNBCommand(cmd.Cmd):
 
         key = c_name + "." + c_id
         try:
-            print(models.storage.all()[key])
+            print(storage._FileStorage__objects[key])
         except KeyError:
             print("** no instance found **")
 
@@ -215,12 +222,10 @@ class HBNBCommand(cmd.Cmd):
         key = c_name + "." + c_id
 
         try:
-    del storage.all()[key]  # Remove parentheses here
-    storage.save()
-    
-except KeyError:
-    print("** no instance found **")
-
+            del(storage.all()[key])
+            storage.save()
+        except KeyError:
+            print("** no instance found **")
 
     def help_destroy(self):
         """ Help information for the destroy command """
@@ -236,11 +241,11 @@ except KeyError:
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            for k, v in models.storage.all().items():
+            for k, v in storage._FileStorage__objects.items():
                 if k.split('.')[0] == args:
                     print_list.append(str(v))
         else:
-            for k, v in models.storage.all().items():
+            for k, v in storage._FileStorage__objects.items():
                 print_list.append(str(v))
 
         print(print_list)
@@ -253,7 +258,7 @@ except KeyError:
     def do_count(self, args):
         """Count current number of class instances"""
         count = 0
-        for k, v in models.storage.all().items():
+        for k, v in storage._FileStorage__objects.items():
             if args == k.split('.')[0]:
                 count += 1
         print(count)
@@ -288,13 +293,13 @@ except KeyError:
         # generate key from class and id
         key = c_name + "." + c_id
 
-        # determine if key is present
+        # determine if key == present
         if key not in storage.all():
             print("** no instance found **")
             return
 
         # first determine if kwargs or args
-        if '{' in args[2] and '}' in args[2] and type(eval(args[2])) is dict:
+        if '{' in args[2] and '}' in args[2] and type(eval(args[2])) == dict:
             kwargs = eval(args[2])
             args = []  # reformat kwargs into list, ex: [<name>, <value>, ...]
             for k, v in kwargs.items():
