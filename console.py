@@ -153,7 +153,7 @@ class HBNBCommand(cmd.Cmd):
 
         print(new_instance.id)
         new_instance.save()
-        
+        #empty line
     def help_create(self):
         """ Help information for the create method """
         print("Creates a class of any type")
@@ -217,6 +217,7 @@ class HBNBCommand(cmd.Cmd):
         try:
     del storage.all()[key]  # Remove parentheses here
     storage.save()
+    
 except KeyError:
     print("** no instance found **")
 
